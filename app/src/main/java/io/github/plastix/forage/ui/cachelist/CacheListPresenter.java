@@ -10,6 +10,7 @@ import io.github.plastix.forage.data.local.model.Cache;
 import io.github.plastix.forage.data.location.LocationInteractor;
 import io.github.plastix.forage.data.network.NetworkInteractor;
 import io.github.plastix.forage.ui.base.rx.RxPresenter;
+import io.github.plastix.forage.util.LocationUtils;
 import io.github.plastix.forage.util.RxUtils;
 import io.realm.OrderedRealmCollection;
 import rx.Subscription;
@@ -62,29 +63,52 @@ public class CacheListPresenter extends RxPresenter<CacheListView> {
         RxUtils.safeUnsubscribe(networkSubscription);
 
         networkInteractor.hasInternetConnectionCompletable().subscribe(
-                () -> locationInteractor.isLocationAvailable().subscribe(() -> {
-                    networkSubscription = locationInteractor.getUpdatedLocation()
-                            .toObservable()
-                            .compose(CacheListPresenter.this.<Location>deliverFirst())
-                            .toSingle()
-                            .flatMap(location -> apiInteractor.getNearbyCaches(location.getLatitude(),
-                                    location.getLongitude(),
-                                    NEARBY_CACHE_RADIUS_MILES))
-                            .subscribe(caches -> {
-                                // The adapter will update automatically after this database write
-                                databaseInteractor.clearAndSaveGeocaches(caches);
-                                RxUtils.safeUnsubscribe(networkSubscription);
-                            }, throwable -> {
-                                if (isViewAttached()) {
-                                    view.onErrorFetch();
-                                }
-                                Timber.e(throwable.getMessage(), throwable);
-                            });
+                () -> locationInteractor.isLocationAvailable().subscribe(status -> {
+                    if (LocationUtils.statusLocationEnabled(status)) {
+                        Timber.e("Fetching geocaches!");
+                        fetchGeocaches();
+                    } else if (LocationUtils.statusLocationResolutionRequired(status)) {
+                        if (isViewAttached()) {
+                            view.showLocationDialog(status);
+                        }
+                    } else {
+                        if (isViewAttached()) {
+                            view.onErrorLocation();
+                        }
+                    }
+                }, throwable -> {
+                    if (isViewAttached()) {
+                        view.onErrorLocation();
+                    }
+                }),
+                throwable -> {
+                    if (isViewAttached()) {
+                        view.onErrorInternet();
+                    }
+                });
 
-                    addSubscription(networkSubscription);
-                }, throwable -> view.onErrorLocation()),
-                throwable -> view.onErrorInternet());
+    }
 
+    private void fetchGeocaches() {
+        networkSubscription = locationInteractor.getUpdatedLocation()
+                .toObservable()
+                .compose(CacheListPresenter.this.<Location>deliverFirst())
+                .toSingle()
+                .flatMap(location -> apiInteractor.getNearbyCaches(location.getLatitude(),
+                        location.getLongitude(),
+                        NEARBY_CACHE_RADIUS_MILES))
+                .subscribe(caches -> {
+                    // The adapter will update automatically after this database write
+                    databaseInteractor.clearAndSaveGeocaches(caches);
+                    RxUtils.safeUnsubscribe(networkSubscription);
+                }, throwable -> {
+                    if (isViewAttached()) {
+                        view.onErrorFetch();
+                    }
+                    Timber.e(throwable.getMessage(), throwable);
+                });
+
+        addSubscription(networkSubscription);
     }
 
     @Override

@@ -1,6 +1,9 @@
 package io.github.plastix.forage.ui.cachelist;
 
 
+import android.app.Activity;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
@@ -9,6 +12,8 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+
+import com.google.android.gms.common.api.Status;
 
 import java.lang.ref.WeakReference;
 
@@ -24,6 +29,7 @@ import io.github.plastix.forage.ui.misc.SimpleDividerItemDecoration;
 import io.github.plastix.forage.util.ActivityUtils;
 import io.github.plastix.forage.util.PermissionUtils;
 import io.realm.OrderedRealmCollection;
+import timber.log.Timber;
 
 /**
  * Fragment that is responsible for the Geocache list.
@@ -33,6 +39,8 @@ public class CacheListFragment extends PresenterFragment<CacheListPresenter, Cac
 
     private static final int LOCATION_REQUEST_CODE = 0;
     private static final String LOCATION_PERMISSION = android.Manifest.permission.ACCESS_FINE_LOCATION;
+
+    private static final int LOCATION_REQUEST_CHECK_SETTINGS = 1;
 
     @Inject
     SimpleDividerItemDecoration itemDecorator;
@@ -108,14 +116,6 @@ public class CacheListFragment extends PresenterFragment<CacheListPresenter, Cac
     }
 
     @Override
-    public void setRefreshing() {
-        // TODO: Post fix required due to Support V4 bug
-        // Will be fixed in 24.1.0
-        // See https://code.google.com/p/android/issues/detail?id=77712
-        swipeRefreshLayout.post(() -> swipeRefreshLayout.setRefreshing(true));
-    }
-
-    @Override
     public void onErrorInternet() {
         makeErrorSnackbar(R.string.cachelist_error_no_internet);
     }
@@ -141,13 +141,30 @@ public class CacheListFragment extends PresenterFragment<CacheListPresenter, Cac
     }
 
     private void downloadGeocaches() {
-        swipeRefreshLayout.setRefreshing(true);
+        setRefreshing();
         presenter.getGeocachesFromInternet();
+    }
+
+    @Override
+    public void setRefreshing() {
+        // TODO: Post fix required due to Support V4 bug
+        // Will be fixed in 24.2.0
+        // See https://code.google.com/p/android/issues/detail?id=77712
+        swipeRefreshLayout.post(() -> swipeRefreshLayout.setRefreshing(true));
     }
 
     @Override
     public void onErrorFetch() {
         makeErrorSnackbar(R.string.cachelist_error_failed_parse);
+    }
+
+    @Override
+    public void showLocationDialog(Status status) {
+        try {
+            status.startResolutionForResult(getActivity(), LOCATION_REQUEST_CHECK_SETTINGS);
+        } catch (IntentSender.SendIntentException e) {
+            onErrorLocation();
+        }
     }
 
     @Override
@@ -175,6 +192,27 @@ public class CacheListFragment extends PresenterFragment<CacheListPresenter, Cac
                     PermissionRationaleDialog.show(getActivity(), R.string.cachelist_nolocation);
                 }
             }
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Timber.e("got result! %s %s", requestCode, resultCode);
+        switch (requestCode) {
+            case LOCATION_REQUEST_CHECK_SETTINGS:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        Timber.e("Location services enabled!");
+                        downloadGeocaches();
+                        break;
+
+                    case Activity.RESULT_CANCELED:
+                        Timber.e("Location services disabled!");
+                        onErrorLocation();
+                        break;
+                }
+                break;
         }
     }
 

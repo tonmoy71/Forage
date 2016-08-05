@@ -1,5 +1,7 @@
 package io.github.plastix.forage.ui.cachelist;
 
+import com.google.android.gms.common.api.Status;
+
 import io.github.plastix.forage.data.local.model.Cache;
 import io.realm.OrderedRealmCollection;
 
@@ -19,4 +21,5 @@ public interface CacheListView {
 
     void setRefreshing();
 
+    void showLocationDialog(Status status);
 }

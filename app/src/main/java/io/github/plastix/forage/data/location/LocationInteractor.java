@@ -3,13 +3,13 @@ package io.github.plastix.forage.data.location;
 import android.location.Location;
 import android.support.annotation.NonNull;
 
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 import rx.AsyncEmitter;
-import rx.Completable;
 import rx.Observable;
 import rx.Single;
 
@@ -74,14 +74,14 @@ public class LocationInteractor {
 
     /**
      * Returns whether location is available on the device using Google Play Location Services using an
-     * RxJava Completable.
+     * RxJava Single.
      *
      * @return Completable calls onComplete() when location is available, and onError() when not.
      */
     @NonNull
-    public Completable isLocationAvailable() {
+    public Single<Status> isLocationAvailable() {
         return Observable.fromAsync(locationAvailableProvider.get(),
-                AsyncEmitter.BackpressureMode.NONE).toCompletable();
+                AsyncEmitter.BackpressureMode.NONE).take(1).toSingle();
     }
 
 }

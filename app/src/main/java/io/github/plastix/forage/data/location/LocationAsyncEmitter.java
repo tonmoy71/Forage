@@ -14,6 +14,7 @@ import javax.inject.Inject;
 
 import rx.AsyncEmitter;
 import rx.functions.Action1;
+import timber.log.Timber;
 
 public class LocationAsyncEmitter implements Action1<AsyncEmitter<Location>> {
 
@@ -33,7 +34,10 @@ public class LocationAsyncEmitter implements Action1<AsyncEmitter<Location>> {
     @Override
     public void call(AsyncEmitter<Location> locationAsyncEmitter) {
 
-        LocationListener locationListener = locationAsyncEmitter::onNext;
+        LocationListener locationListener = location -> {
+            Timber.e("got location updates");
+            locationAsyncEmitter.onNext(location);
+        };
 
         GoogleApiClient.OnConnectionFailedListener onConnectionFailedListener = connectionResult ->
                 locationAsyncEmitter.onError(new Throwable("Failed to connect to Google Play Services!"));
@@ -42,6 +46,7 @@ public class LocationAsyncEmitter implements Action1<AsyncEmitter<Location>> {
             @Override
             public void onConnected(@Nullable Bundle bundle) {
                 try {
+                    Timber.e("requesting location updates!");
                     LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, locationListener);
                 } catch (SecurityException e) {
                     locationAsyncEmitter.onError(new Throwable("Location permission not available!"));

@@ -4,6 +4,9 @@ import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.support.annotation.NonNull;
 
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+
 public class LocationUtils {
 
     private static double MIN_LATITUDE = -90;
@@ -97,5 +100,13 @@ public class LocationUtils {
      */
     public static boolean isValidLongitude(double longitude) {
         return longitude <= MAX_LONGITUDE && MIN_LONGITUDE <= longitude;
+    }
+
+    public static boolean statusLocationEnabled(Status status){
+        return status.getStatusCode() == LocationSettingsStatusCodes.SUCCESS;
+    }
+
+    public static boolean statusLocationResolutionRequired(Status status){
+        return status.getStatusCode() == LocationSettingsStatusCodes.RESOLUTION_REQUIRED;
     }
 }
