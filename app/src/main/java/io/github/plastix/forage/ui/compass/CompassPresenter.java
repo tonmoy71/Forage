@@ -15,6 +15,7 @@ import io.github.plastix.forage.util.AngleUtils;
 import io.github.plastix.forage.util.LocationUtils;
 import io.github.plastix.forage.util.RxUtils;
 import rx.Observable;
+import timber.log.Timber;
 
 public class CompassPresenter extends RxPresenter<CompassView> {
 
@@ -39,16 +40,16 @@ public class CompassPresenter extends RxPresenter<CompassView> {
     }
 
     public void startCompass() {
-        locationInteractor.isLocationAvailable().subscribe(() -> {
-            if (!enabled) {
-                rotateCompass();
-                enabled = !enabled;
-            }
-        }, throwable -> {
-            if (isViewAttached()) {
-                view.showLocationUnavailableDialog();
-            }
-        });
+//        locationInteractor.isLocationAvailable().subscribe(() -> {
+        if (!enabled) {
+            rotateCompass();
+            enabled = !enabled;
+        }
+//        }, throwable -> {
+//            if (isViewAttached()) {
+//                view.showLocationUnavailableDialog();
+//            }
+//        });
 
     }
 
@@ -78,7 +79,9 @@ public class CompassPresenter extends RxPresenter<CompassView> {
                                 view.setDistance(pair.second.distanceTo(target));
                                 view.setAccuracy(pair.second.getAccuracy());
                             }
-                        }, Throwable::printStackTrace)
+                        }, throwable -> {
+                            Timber.e(throwable, "Error updating compass!");
+                        })
         );
     }
 
