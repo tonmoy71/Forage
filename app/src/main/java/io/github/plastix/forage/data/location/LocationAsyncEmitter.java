@@ -35,7 +35,6 @@ public class LocationAsyncEmitter implements Action1<AsyncEmitter<Location>> {
     public void call(AsyncEmitter<Location> locationAsyncEmitter) {
 
         LocationListener locationListener = location -> {
-            Timber.e("got location updates");
             locationAsyncEmitter.onNext(location);
         };
 
@@ -46,7 +45,6 @@ public class LocationAsyncEmitter implements Action1<AsyncEmitter<Location>> {
             @Override
             public void onConnected(@Nullable Bundle bundle) {
                 try {
-                    Timber.e("requesting location updates!");
                     LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, locationListener);
                 } catch (SecurityException e) {
                     locationAsyncEmitter.onError(new Throwable("Location permission not available!"));

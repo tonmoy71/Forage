@@ -85,7 +85,7 @@ public abstract class BaseFragmentActivity<T extends Fragment> extends BaseActiv
 
         // Forward onActivityResult to child Fragment
         Fragment fragment = getSupportFragmentManager().findFragmentByTag(FRAGMENT_TAG);
-        if (fragment != null) {
+        if (fragment != null && !fragment.isRemoving()) {
             fragment.onActivityResult(requestCode, resultCode, data);
         }
     }

@@ -53,7 +53,8 @@ public class CacheListPresenter extends RxPresenter<CacheListView> {
                                 throwable -> {
                                     // TODO show error dialog
                                     Timber.e(throwable.getMessage(), throwable);
-                                })
+                                }
+                        )
         );
     }
 
@@ -63,24 +64,25 @@ public class CacheListPresenter extends RxPresenter<CacheListView> {
         RxUtils.safeUnsubscribe(networkSubscription);
 
         networkInteractor.hasInternetConnectionCompletable().subscribe(
-                () -> locationInteractor.isLocationAvailable().subscribe(status -> {
-                    if (LocationUtils.statusLocationEnabled(status)) {
-                        Timber.e("Fetching geocaches!");
-                        fetchGeocaches();
-                    } else if (LocationUtils.statusLocationResolutionRequired(status)) {
-                        if (isViewAttached()) {
-                            view.showLocationDialog(status);
-                        }
-                    } else {
-                        if (isViewAttached()) {
-                            view.onErrorLocation();
-                        }
-                    }
-                }, throwable -> {
-                    if (isViewAttached()) {
-                        view.onErrorLocation();
-                    }
-                }),
+                () -> locationInteractor.isLocationAvailable()
+                        .doOnSubscribe(this::setRefreshing)
+                        .subscribe(status -> {
+                            if (LocationUtils.statusLocationEnabled(status)) {
+                                fetchGeocaches();
+                            } else if (LocationUtils.statusLocationResolutionRequired(status)) {
+                                if (isViewAttached()) {
+                                    view.showLocationDialog(status);
+                                }
+                            } else {
+                                if (isViewAttached()) {
+                                    view.onErrorLocation();
+                                }
+                            }
+                        }, throwable -> {
+                            if (isViewAttached()) {
+                                view.onErrorLocation();
+                            }
+                        }),
                 throwable -> {
                     if (isViewAttached()) {
                         view.onErrorInternet();
@@ -97,6 +99,7 @@ public class CacheListPresenter extends RxPresenter<CacheListView> {
                 .flatMap(location -> apiInteractor.getNearbyCaches(location.getLatitude(),
                         location.getLongitude(),
                         NEARBY_CACHE_RADIUS_MILES))
+                .doOnSubscribe(this::setRefreshing)
                 .subscribe(caches -> {
                     // The adapter will update automatically after this database write
                     databaseInteractor.clearAndSaveGeocaches(caches);
@@ -117,7 +120,13 @@ public class CacheListPresenter extends RxPresenter<CacheListView> {
 
         // If we have an active networkSubscription it means we are still fetching geocaches
         // from the internet so set the view to refreshing
-        if (!networkSubscription.isUnsubscribed()) {
+        if (networkSubscription != null && !networkSubscription.isUnsubscribed()) {
+            setRefreshing();
+        }
+    }
+
+    private void setRefreshing() {
+        if (isViewAttached()) {
             view.setRefreshing();
         }
     }

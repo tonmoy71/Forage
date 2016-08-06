@@ -29,7 +29,6 @@ import io.github.plastix.forage.ui.misc.SimpleDividerItemDecoration;
 import io.github.plastix.forage.util.ActivityUtils;
 import io.github.plastix.forage.util.PermissionUtils;
 import io.realm.OrderedRealmCollection;
-import timber.log.Timber;
 
 /**
  * Fragment that is responsible for the Geocache list.
@@ -141,7 +140,6 @@ public class CacheListFragment extends PresenterFragment<CacheListPresenter, Cac
     }
 
     private void downloadGeocaches() {
-        setRefreshing();
         presenter.getGeocachesFromInternet();
     }
 
@@ -198,17 +196,14 @@ public class CacheListFragment extends PresenterFragment<CacheListPresenter, Cac
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Timber.e("got result! %s %s", requestCode, resultCode);
         switch (requestCode) {
             case LOCATION_REQUEST_CHECK_SETTINGS:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
-                        Timber.e("Location services enabled!");
                         downloadGeocaches();
                         break;
 
                     case Activity.RESULT_CANCELED:
-                        Timber.e("Location services disabled!");
                         onErrorLocation();
                         break;
                 }
