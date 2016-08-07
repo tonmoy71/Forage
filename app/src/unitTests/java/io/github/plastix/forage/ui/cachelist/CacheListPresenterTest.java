@@ -2,10 +2,17 @@ package io.github.plastix.forage.ui.cachelist;
 
 import android.location.Location;
 
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.List;
 
@@ -24,6 +31,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(Status.class)
 public class CacheListPresenterTest {
 
     private CacheListPresenter cacheListPresenter;
@@ -64,7 +73,10 @@ public class CacheListPresenterTest {
                 .thenReturn(Single.just(caches));
 
         when(networkInteractor.hasInternetConnectionCompletable()).thenReturn(Completable.complete());
-        when(locationInteractor.isLocationAvailable()).thenReturn(Completable.complete());
+
+        Status status = PowerMockito.mock(Status.class);
+        when(status.getStatusCode()).thenReturn(LocationSettingsStatusCodes.SUCCESS);
+        when(locationInteractor.getLocationSettingStatus()).thenReturn(Single.just(status));
 
 
         cacheListPresenter.getGeocachesFromInternet();
@@ -86,8 +98,10 @@ public class CacheListPresenterTest {
     public void fetchGeocaches_locationErrorUpdatesView() {
         when(networkInteractor.hasInternetConnectionCompletable()).thenReturn(
                 Completable.complete());
-        when(locationInteractor.isLocationAvailable()).thenReturn(
-                Completable.error(new Throwable()));
+
+        Status status = PowerMockito.mock(Status.class);
+        when(status.getStatusCode()).thenReturn(LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE);
+        when(locationInteractor.getLocationSettingStatus()).thenReturn(Single.just(status));
 
         cacheListPresenter.getGeocachesFromInternet();
 
@@ -98,8 +112,11 @@ public class CacheListPresenterTest {
     public void fetchGeocaches_fetchErrorUpdatesView() {
         when(networkInteractor.hasInternetConnectionCompletable()).thenReturn(
                 Completable.complete());
-        when(locationInteractor.isLocationAvailable()).thenReturn(
-                Completable.complete());
+
+        Status status = PowerMockito.mock(Status.class);
+        when(status.getStatusCode()).thenReturn(LocationSettingsStatusCodes.SUCCESS);
+        when(locationInteractor.getLocationSettingStatus()).thenReturn(Single.just(status));
+
         when(okApiInteractor.getNearbyCaches(anyDouble(), anyDouble(), anyDouble())).thenReturn(
                 Single.<List<Cache>>error(new Throwable()));
 

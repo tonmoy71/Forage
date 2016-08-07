@@ -19,18 +19,18 @@ import static org.mockito.Mockito.verify;
 public class LocationInteractorTest {
 
     private Provider<LocationAsyncEmitter> locationAsyncEmitterProvider;
-    private Provider<LocationAvailableAsyncEmitter> locationAvailableProvider;
+    private Provider<LocationStatusAsyncEmitter> locationAvailableProvider;
     private LocationInteractor locationInteractor;
     private LocationAsyncEmitter locationAsyncEmitter;
-    private LocationAvailableAsyncEmitter locationAvailableAsyncEmitter;
+    private LocationStatusAsyncEmitter locationStatusAsyncEmitter;
 
     @Before
     public void beforeEachTest() {
         locationAsyncEmitter = mock(LocationAsyncEmitter.class);
         locationAsyncEmitterProvider = () -> locationAsyncEmitter;
 
-        locationAvailableAsyncEmitter = mock(LocationAvailableAsyncEmitter.class);
-        locationAvailableProvider = () -> locationAvailableAsyncEmitter;
+        locationStatusAsyncEmitter = mock(LocationStatusAsyncEmitter.class);
+        locationAvailableProvider = () -> locationStatusAsyncEmitter;
 
         locationInteractor = new LocationInteractor(locationAsyncEmitterProvider, locationAvailableProvider);
     }

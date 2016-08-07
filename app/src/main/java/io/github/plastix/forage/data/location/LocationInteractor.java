@@ -21,11 +21,11 @@ public class LocationInteractor {
     private static final int LOCATION_FASTEST_INTERVAL_MILLIS = 250;
 
     private Provider<LocationAsyncEmitter> locationEmitterProvider;
-    private Provider<LocationAvailableAsyncEmitter> locationAvailableProvider;
+    private Provider<LocationStatusAsyncEmitter> locationAvailableProvider;
 
     @Inject
     public LocationInteractor(@NonNull Provider<LocationAsyncEmitter> locationEmitterProvider,
-                              @NonNull Provider<LocationAvailableAsyncEmitter> locationAvailableProvider) {
+                              @NonNull Provider<LocationStatusAsyncEmitter> locationAvailableProvider) {
         this.locationEmitterProvider = locationEmitterProvider;
         this.locationAvailableProvider = locationAvailableProvider;
     }
@@ -34,7 +34,7 @@ public class LocationInteractor {
      * Gets the updated location using Google Play Location Services.
      * The caller must have location permissions before calling this method!
      *
-     * @return An rx.Observable that emits one Location object.
+     * @return An rx.Single that emits the updated location.
      */
     @NonNull
     public Single<Location> getUpdatedLocation() {
@@ -73,13 +73,12 @@ public class LocationInteractor {
     }
 
     /**
-     * Returns whether location is available on the device using Google Play Location Services using an
-     * RxJava Single.
+     * Returns the current Location setting status using the Google Play Services location SettingsAPI.
      *
-     * @return Completable calls onComplete() when location is available, and onError() when not.
+     * @return rx.Single that emits the current Location Settings {@link Status}.
      */
     @NonNull
-    public Single<Status> isLocationAvailable() {
+    public Single<Status> getLocationSettingStatus() {
         return Observable.fromAsync(locationAvailableProvider.get(),
                 AsyncEmitter.BackpressureMode.NONE).take(1).toSingle();
     }

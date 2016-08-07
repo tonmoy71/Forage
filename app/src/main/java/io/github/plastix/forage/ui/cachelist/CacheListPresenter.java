@@ -64,7 +64,7 @@ public class CacheListPresenter extends RxPresenter<CacheListView> {
         RxUtils.safeUnsubscribe(networkSubscription);
 
         networkInteractor.hasInternetConnectionCompletable().subscribe(
-                () -> locationInteractor.isLocationAvailable()
+                () -> locationInteractor.getLocationSettingStatus()
                         .doOnSubscribe(this::setRefreshing)
                         .subscribe(status -> {
                             if (LocationUtils.statusLocationEnabled(status)) {

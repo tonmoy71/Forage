@@ -18,12 +18,12 @@ import javax.inject.Inject;
 import rx.AsyncEmitter;
 import rx.functions.Action1;
 
-public class LocationAvailableAsyncEmitter implements Action1<AsyncEmitter<Status>> {
+public class LocationStatusAsyncEmitter implements Action1<AsyncEmitter<Status>> {
 
     private final GoogleApiClient googleApiClient;
 
     @Inject
-    public LocationAvailableAsyncEmitter(@NonNull GoogleApiClient googleApiClient) {
+    public LocationStatusAsyncEmitter(@NonNull GoogleApiClient googleApiClient) {
         this.googleApiClient = googleApiClient;
     }
 
